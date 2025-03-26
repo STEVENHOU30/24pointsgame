@@ -1,0 +1,82 @@
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  height: 100vh;
+}
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: white; /* 调整为纯白色背景 */
+  font-family: Arial, sans-serif;
+}
+
+.login-container h1 {
+  font-size: 2.5rem;
+  color: #1a3c34;
+  margin-bottom: 1rem;
+}
+
+.login-container p {
+  font-size: 1.2rem;
+  color: #555;
+  margin-bottom: 2rem;
+}
+
+.error {
+  color: #ff4d4f;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  margin-bottom: 1rem;
+}
+
+.login-form input {
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.login-form button {
+  padding: 0.8rem;
+  background-color: #1a3c34;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.login-form button:hover {
+  background-color: #145c4f;
+}
+
+.card-decorations {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.card-decorations .card {
+  font-size: 2rem;
+}
+
+.card-decorations .red {
+  color: #ff4d4f;
+}
+
+.card-decorations .black {
+  color: #000;
+}
