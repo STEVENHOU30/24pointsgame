@@ -6,7 +6,7 @@ import throttle from "lodash.throttle";
 import "../GameRoom.css";
 
 export function GameRoom({ username }) {
-  const WS_URL = "ws://localhost:53840";
+  const WS_URL = "wss://a437e01c-fbba-41c9-b9fd-a92a88a62805-00-3vf9l3c2yfjgg.pike.replit.dev";
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     WS_URL,
     {

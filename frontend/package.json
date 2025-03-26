@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://STEVENHOU30.github.io/24points",
+  "homepage": "https://STEVENHOU30.github.io/24pointsgame",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
