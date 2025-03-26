@@ -147,7 +147,7 @@ export function GameRoom({ username }) {
       const newScores = { ...scores, [username]: scores[username] + 1 };
       setScores(newScores);
 
-      if (newScores[username] >= 2) {
+      if (newScores[username] >= 5) {
         setWinner(username);
         sendJsonMessage({
           type: "game",
