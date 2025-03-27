@@ -11,7 +11,7 @@ function LoginWrapper() {
 
 function App() {
   return (
-    <Router>
+    <Router basename="/24pointsgame">
       <Routes>
         <Route path="/" element={<LoginWrapper />} />
         <Route path="/game" element={<GameRoom />} />
