@@ -34,6 +34,7 @@ export function GameRoom({ username }) {
   const [hasClickedStart, setHasClickedStart] = useState(false); // 新增状态：当前用户是否点击 Start Play
   const [startedUsers, setStartedUsers] = useState([]); // 新增状态：已点击 Start Play 的用户
 
+
   const getAvatarColor = (username) => {
     const safeUsername = username || "Unknown";
     const colors = ["#FFD700", "#1E90FF", "#FF69B4", "#32CD32"];
@@ -65,6 +66,7 @@ export function GameRoom({ username }) {
             setWinner(lastJsonMessage.winner);
           } else {
             setroundWin(lastJsonMessage.roundWin);
+            setCountdown(lastJsonMessage.countdown);
           }
         } else if (lastJsonMessage.subtype === "new_round") {
           setCurrentCards([]);
@@ -162,6 +164,7 @@ export function GameRoom({ username }) {
           subtype: "score",
           scores: newScores,
           roundWin: username,
+          countdown:5,
         });
         setCountdown(5);
       }
