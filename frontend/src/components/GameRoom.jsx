@@ -33,6 +33,7 @@ export function GameRoom({ username }) {
   const [gameStarted, setGameStarted] = useState(false); // 新增状态：游戏是否开始
   const [hasClickedStart, setHasClickedStart] = useState(false); // 新增状态：当前用户是否点击 Start Play
   const [startedUsers, setStartedUsers] = useState([]); // 新增状态：已点击 Start Play 的用户
+  const [winningExpression, setWinningExpression] = useState(null);
 
 
   const getAvatarColor = (username) => {
@@ -67,6 +68,10 @@ export function GameRoom({ username }) {
           } else {
             setroundWin(lastJsonMessage.roundWin);
             setCountdown(lastJsonMessage.countdown);
+            setWinningExpression({
+              expression: lastJsonMessage.expression,
+              emoji: lastJsonMessage.emoji,
+            })
           }
         } else if (lastJsonMessage.subtype === "new_round") {
           setCurrentCards([]);
@@ -75,6 +80,7 @@ export function GameRoom({ username }) {
           setCardChangeRequest(null); // 清空更换卡牌请求
           setAgreedUsers([]); // 清空同意用户列表
           setGenerateNewCardsTrigger((prev) => prev + 1);
+          setWinningExpression(null);
         } else if (lastJsonMessage.subtype === "request_card_change") {
           setCardChangeRequest(lastJsonMessage.requester);
           setAgreedUsers(lastJsonMessage.agreedUsers || []);
@@ -165,6 +171,7 @@ export function GameRoom({ username }) {
           scores: newScores,
           roundWin: username,
           countdown:5,
+          expression: expression,
         });
         setCountdown(5);
       }
@@ -215,13 +222,19 @@ export function GameRoom({ username }) {
       <p className="welcome-message">Welcome, {username}!</p>
       {winner && (
         <div className="winner-message">
-          <h3>{winner} wins the game!</h3>
+          <h3>{winner} wins the game! Want a kiss 😘</h3>
         </div>
       )}
 
       {roundWin && (
         <div className="round-winner-message">
           <h3>{roundWin} wins this round!</h3>
+
+          {countdown !== null && winningExpression && (
+              <p>
+                Winning Expression: {winningExpression.expression} 🐮
+              </p>
+            )}
           {countdown !== null && (
             <p>new round will begin in {countdown} s !!!</p>
           )}
