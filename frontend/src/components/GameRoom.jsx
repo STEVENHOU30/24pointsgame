@@ -3,9 +3,14 @@ import CardDisplay from "./CardDisplay";
 import ExpressionInput from "./ExpressionInput";
 import useWebSocket from "react-use-websocket";
 import throttle from "lodash.throttle";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../GameRoom.css";
 
-export function GameRoom({ username }) {
+export function GameRoom({ onError }) {
+  const location = useLocation();
+  const username = location.state?.username || "Guest";
+  const navigate = useNavigate();
+
   const WS_URL = "wss://a437e01c-fbba-41c9-b9fd-a92a88a62805-00-3vf9l3c2yfjgg.pike.replit.dev";
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     WS_URL,
@@ -29,12 +34,11 @@ export function GameRoom({ username }) {
   const [cardChangeRequest, setCardChangeRequest] = useState(null);
   const [agreedUsers, setAgreedUsers] = useState([]);
   const [generateNewCardsTrigger, setGenerateNewCardsTrigger] = useState(0);
-  const sendJsonMessageThrottled = useRef(throttle(sendJsonMessage, 50));
-  const [gameStarted, setGameStarted] = useState(false); // 新增状态：游戏是否开始
-  const [hasClickedStart, setHasClickedStart] = useState(false); // 新增状态：当前用户是否点击 Start Play
-  const [startedUsers, setStartedUsers] = useState([]); // 新增状态：已点击 Start Play 的用户
   const [winningExpression, setWinningExpression] = useState(null);
-
+  const sendJsonMessageThrottled = useRef(throttle(sendJsonMessage, 50));
+  const [gameStarted, setGameStarted] = useState(false);
+  const [hasClickedStart, setHasClickedStart] = useState(false);
+  const [startedUsers, setStartedUsers] = useState([]);
 
   const getAvatarColor = (username) => {
     const safeUsername = username || "Unknown";
@@ -68,18 +72,22 @@ export function GameRoom({ username }) {
           } else {
             setroundWin(lastJsonMessage.roundWin);
             setCountdown(lastJsonMessage.countdown);
-            setWinningExpression({
-              expression: lastJsonMessage.expression,
-              emoji: lastJsonMessage.emoji,
-            })
+            if (lastJsonMessage.expression) {
+              setWinningExpression({
+                expression: lastJsonMessage.expression,
+                emoji: lastJsonMessage.emoji,
+                roundWin: lastJsonMessage.roundWin,
+              });
+            }
           }
         } else if (lastJsonMessage.subtype === "new_round") {
           setCurrentCards([]);
           setUsedCards([]);
           setroundWin("");
-          setCardChangeRequest(null); // 清空更换卡牌请求
-          setAgreedUsers([]); // 清空同意用户列表
+          setCardChangeRequest(null);
+          setAgreedUsers([]);
           setGenerateNewCardsTrigger((prev) => prev + 1);
+          setCountdown(null);
           setWinningExpression(null);
         } else if (lastJsonMessage.subtype === "request_card_change") {
           setCardChangeRequest(lastJsonMessage.requester);
@@ -93,7 +101,7 @@ export function GameRoom({ username }) {
               system: true,
             },
           ]);
-        }else if (lastJsonMessage.subtype === "start_game_status") {
+        } else if (lastJsonMessage.subtype === "start_game_status") {
           console.log("Processing start_game_status:", lastJsonMessage);
           setStartedUsers(lastJsonMessage.startedUsers);
         } else if (lastJsonMessage.subtype === "game_start") {
@@ -102,8 +110,8 @@ export function GameRoom({ username }) {
           setCurrentCards([]);
           setUsedCards([]);
           setroundWin("");
-          setCardChangeRequest(null); // 清空更换卡牌请求
-          setAgreedUsers([]); // 清空同意用户列表
+          setCardChangeRequest(null);
+          setAgreedUsers([]);
           setGenerateNewCardsTrigger((prev) => prev + 1);
         }
       }
@@ -113,7 +121,6 @@ export function GameRoom({ username }) {
   useEffect(() => {
     if (readyState === WebSocket.OPEN) {
       sendJsonMessage({ type: "set_name", name: username });
-
     }
   }, [readyState, username, sendJsonMessage]);
 
@@ -170,10 +177,9 @@ export function GameRoom({ username }) {
           subtype: "score",
           scores: newScores,
           roundWin: username,
-          countdown:5,
+          countdown: 5,
           expression: expression,
         });
-        setCountdown(5);
       }
     }
   };
@@ -181,7 +187,6 @@ export function GameRoom({ username }) {
   const handleRequestCardChange = () => {
     if (!gameStarted) return;
     if (cardChangeRequest) {
-      // 如果已经有请求，当前用户点击表示同意
       if (!agreedUsers.includes(username)) {
         setGenerateNewCards(true);
         sendJsonMessage({
@@ -192,13 +197,20 @@ export function GameRoom({ username }) {
         });
       }
     } else {
-      // 如果没有请求，当前用户发起请求
       sendJsonMessage({
         type: "game",
         subtype: "request_card_change",
         requester: username,
       });
     }
+  };
+
+  const handleExit = () => {
+    // 调用 onError 回调（如果存在），并跳转到登录页面
+    if (onError) {
+      onError("You have exited the game.");
+    }
+    navigate("/", { state: { error: "You have exited the game." } });
   };
 
   const renderUserList = () => {
@@ -218,73 +230,81 @@ export function GameRoom({ username }) {
 
   return (
     <div className="room-info">
-      <h2>Game Room!</h2>
-      <p className="welcome-message">Welcome, {username}!</p>
-      {winner && (
-        <div className="winner-message">
-          <h3>{winner} wins the game! Want a kiss 😘</h3>
+      {!gameStarted && (
+        <div className="overlay">
+          <div className="start-game-section">
+            <p>Please click the button below to start the game.</p>
+            <button onClick={handleStartPlay} disabled={hasClickedStart}>
+              {hasClickedStart ? "Waiting for others..." : "Start Play"}
+            </button>
+          </div>
         </div>
       )}
 
-      {roundWin && (
-        <div className="round-winner-message">
-          <h3>{roundWin} wins this round!</h3>
+      {winner && (
+        <div className="overlay">
+          <div className="winner-message-overlay">
+            <h3>{winner} wins the game! Kiss Kiss~~😘</h3>
+            <button onClick={handleExit}>Exit to Login</button>
+          </div>
+        </div>
+      )}
 
-          {countdown !== null && winningExpression && (
+      <div className={`game-content ${!gameStarted || winner ? "disabled" : ""}`}>
+        <h2>Game Room!</h2>
+        <p className="welcome-message">Welcome, {username}!</p>
+
+        {roundWin && (
+          <div className="round-winner-message">
+            <h3>{roundWin} wins this round!</h3>
+            {countdown !== null && winningExpression && (
               <p>
                 Winning Expression: {winningExpression.expression} 🐮
               </p>
             )}
-          {countdown !== null && (
-            <p>new round will begin in {countdown} s !!!</p>
-          )}
-        </div>
-      )}
+            {countdown !== null && (
+              <p>new round will begin in {countdown} s !!!</p>
+            )}
+          </div>
+        )}
 
-      <div className="online-users">
-        <h3>Online Users ({onlineUsers.length})</h3>
-        {renderUserList()}
+        <div className="online-users">
+          <h3>Online Users ({onlineUsers.length})</h3>
+          {renderUserList()}
+        </div>
+
+        {cardChangeRequest && cardChangeRequest !== username && !agreedUsers.includes(username) && (
+          <div className="card-change-request">
+            <p>{cardChangeRequest} requests to change cards. Do you agree?</p>
+            <button onClick={handleRequestCardChange}>
+              Agree to Change Cards
+            </button>
+          </div>
+        )}
+
+        <CardDisplay
+          cards={currentCards}
+          setCards={setCurrentCards}
+          usedCards={usedCards}
+          setUsedCards={setUsedCards}
+          sendJsonMessage={sendJsonMessage}
+          readyState={readyState}
+          generateNewCardsTrigger={generateNewCardsTrigger}
+          onRequestCardChange={handleRequestCardChange}
+          cardChangeRequest={cardChangeRequest}
+          username={username}
+          gameStarted={gameStarted}
+        />
+
+        <ExpressionInput
+          cards={currentCards}
+          usedCards={usedCards}
+          setUsedCards={setUsedCards}
+          onExpressionResult={handleExpressionResult}
+          clearInput={clearInput}
+          setClearInput={setClearInput}
+        />
       </div>
-
-      {cardChangeRequest && cardChangeRequest !== username && !agreedUsers.includes(username) && (
-        <div className="card-change-request">
-          <p>{cardChangeRequest} requests to change cards. Do you agree?</p>
-          <button onClick={handleRequestCardChange}>
-            Agree to Change Cards
-          </button>
-        </div>
-      )}
-
-      <CardDisplay
-        cards={currentCards}
-        setCards={setCurrentCards}
-        usedCards={usedCards}
-        setUsedCards={setUsedCards}
-        sendJsonMessage={sendJsonMessage}
-        readyState={readyState}
-        generateNewCardsTrigger={generateNewCardsTrigger}
-        onRequestCardChange={handleRequestCardChange}
-        cardChangeRequest={cardChangeRequest}
-        username={username}
-        gameStarted={gameStarted}
-      />
-
-      <ExpressionInput
-        cards={currentCards}
-        usedCards={usedCards}
-        setUsedCards={setUsedCards}
-        onExpressionResult={handleExpressionResult}
-        clearInput={clearInput}
-        setClearInput={setClearInput}
-      />
-      {!gameStarted && (
-        <div className="start-game-section">
-          <p>Please click the button below to start the game.</p>
-          <button onClick={handleStartPlay} disabled={hasClickedStart}>
-            {hasClickedStart ? "Waiting for others..." : "Start Play"}
-          </button>
-        </div>
-      )}
 
       <footer className="websocket-info">Powered by WebSocket</footer>
     </div>
@@ -292,4 +312,3 @@ export function GameRoom({ username }) {
 }
 
 export default GameRoom;
-

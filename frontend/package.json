@@ -16,6 +16,7 @@
     "perfect-cursors": "^1.0.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-router-dom": "^7.4.0",
     "react-use-websocket": "^4.13.0"
   },
   "devDependencies": {

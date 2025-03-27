@@ -1,14 +1,17 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // 引入 useNavigate
 import "../Login.css";
 
-export function Login({ onLogin }) {
+export function Login({ error: externalError }) {
   const [username, setUsername] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(externalError || "");
+  const navigate = useNavigate();
 
   const handleLogin = (e) => {
     e.preventDefault();
     if (username.trim()) {
-      onLogin(username);
+      // 跳转到游戏页面，并传递 username
+      navigate("/game", { state: { username } });
     } else {
       setError("Please enter a username.");
     }

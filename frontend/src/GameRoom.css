@@ -1,26 +1,59 @@
+/* GameRoom.css */
+
+/* 调整 body 样式 */
 body {
   display: flex;
   justify-content: center;
   align-items: center;
   margin: 0;
   height: 100vh;
+  background-color: #f0f0f0; /* 可选：添加背景色以区分 */
 }
 
+/* 调整 .room-info 样式 */
 .room-info {
+  position: relative;
   padding: 20px;
   max-width: 800px;
   margin: 0 auto;
   font-family: Arial, sans-serif;
-  background-color: #ffffff; /* 调整为纯白色背景 */
+  background-color: #ffffff; /* 纯白色背景 */
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  min-height: 100vh; /* 确保容器占满整个视口高度 */
+  min-height: 100vh; /* 占满整个视口高度 */
   display: flex; /* 使用 flex 布局 */
   flex-direction: column; /* 垂直排列 */
   align-items: center; /* 水平居中 */
   justify-content: center; /* 垂直居中 */
 }
 
+/* 遮罩层，游戏未开始时显示 */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+/* 游戏内容区域 */
+.game-content {
+  position: relative;
+  width: 100%; /* 确保内容区域占满容器 */
+}
+
+/* 游戏未开始时，内容区域变暗并禁用交互 */
+.game-content.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 标题样式 */
 .room-info h2 {
   font-size: 2rem;
   color: #1a3c34;
@@ -35,7 +68,6 @@ body {
   text-align: center;
   margin-bottom: 0;
 }
-
 .winner-message {
   text-align: center;
   margin-bottom: 0;
@@ -45,7 +77,37 @@ body {
   font-size: 1.5rem;
   color: #ff4d4f;
 }
+/* 胜利遮罩层（游戏结束时显示） */
+.winner-message-overlay {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
 
+.winner-message-overlay h3 {
+  font-size: 2rem;
+  color: #ff4d4f;
+  margin-bottom: 20px;
+}
+
+.winner-message-overlay button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.winner-message-overlay button:hover {
+  background-color: #e63946;
+}
+
+/* 回合胜利消息 */
 .round-winner-message {
   text-align: center;
   margin-bottom: 1rem;
@@ -56,8 +118,17 @@ body {
   color: #ff4d4f;
 }
 
+/* 为 round-winner-message 内的 p 标签添加样式 */
+.round-winner-message p {
+  font-size: 1.1rem;
+  color: #333;
+  margin: 0.5rem 0;
+}
+
+/* 在线用户区域 */
 .online-users {
-  margin-bottom: 1rem;
+  margin-left: 12%;
+  margin-bottom: 1.7rem;
 }
 
 .online-users h3 {
@@ -96,6 +167,7 @@ body {
   color: #777;
 }
 
+/* 卡牌显示区域 */
 .card-display {
   display: flex;
   flex-direction: column;
@@ -154,6 +226,7 @@ body {
   background-color: #145c4f;
 }
 
+/* 更换卡牌请求 */
 .card-change-request {
   margin: 10px 0;
   padding: 10px;
@@ -180,11 +253,12 @@ body {
   background-color: #45a049;
 }
 
+/* 输入区域 */
 .input-container {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  width: 100%; /* 确保输入区域占满容器宽度 */
+  width: 100%;
 }
 
 .chat-section,
@@ -306,6 +380,7 @@ body {
   background-color: #e63946;
 }
 
+/* WebSocket 信息 */
 .websocket-info {
   text-align: center;
   margin-top: 2rem;
@@ -313,9 +388,13 @@ body {
   color: #777;
 }
 
+/* Start Play 按钮区域 */
 .start-game-section {
-  margin-top: 20px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
   text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .start-game-section p {
