@@ -68,17 +68,9 @@ body {
   text-align: center;
   margin-bottom: 0;
 }
-.winner-message {
-  text-align: center;
-  margin-bottom: 0;
-}
-
-.winner-message h3 {
-  font-size: 1.5rem;
-  color: #ff4d4f;
-}
 /* 胜利遮罩层（游戏结束时显示） */
-.winner-message-overlay {
+.winner-message-overlay,
+.round-winner-message-overlay {
   background: white;
   padding: 20px;
   border-radius: 8px;
@@ -107,19 +99,13 @@ body {
   background-color: #e63946;
 }
 
-/* 回合胜利消息 */
-.round-winner-message {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.round-winner-message h3 {
+.round-winner-message-overlay h3 {
   font-size: 1.5rem;
   color: #ff4d4f;
 }
 
 /* 为 round-winner-message 内的 p 标签添加样式 */
-.round-winner-message p {
+.round-winner-message-overlay p {
   font-size: 1.1rem;
   color: #333;
   margin: 0.5rem 0;
@@ -406,7 +392,7 @@ body {
 .start-game-section button {
   padding: 10px 20px;
   font-size: 16px;
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
   border: none;
   border-radius: 5px;
@@ -417,3 +403,158 @@ body {
   background-color: #cccccc;
   cursor: not-allowed;
 }
+
+.chat-button{
+  margin-left: 85%;
+  font-size: 20px;
+}
+
+/* 聊天对话框 */
+.chat-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.chat-dialog {
+  background-color: white;
+  height: 100vh; /* 设置高度为视口高度，占满垂直方向 */
+  width: 100vh; /* 设置宽度为父元素的 100%，通常是整个页面宽度 */
+  margin: 0; /* 去除边距 */
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  font-family: Arial, sans-serif;
+  height: 400px;
+  overflow-y: auto;
+  border-bottom: 1px solid #eee;
+  padding: 10px;
+  margin-bottom: 30px;
+}
+.chat-dialog h2 {
+  text-align: center;
+  color: black;
+}
+
+.close-button {
+margin-left: 94%;
+}
+
+.user-message {
+  display: flex;
+  margin: 10px 0;
+}
+
+.message-item {
+  display: flex;
+  flex-direction: row;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.chat-user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-right: 10px;
+  font-weight: bold;
+  font-size: 25px;
+}
+
+.message-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-content strong {
+  margin-right: 10px;
+}
+
+.timestamp {
+  font-size: 0.8em;
+  color: #888;
+}
+
+.chat-input {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+}
+
+.chat-input input[type="text"] {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-right: 10px;
+}
+
+.chat-input input[type="file"] {
+  margin-left: 10px;
+  margin-right: 0px;
+  padding: 8px;
+}
+
+.chat-input button {
+  padding: 8px 16px;
+  background-color: black;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.chat-input button:hover {
+  background-color: #e63946;
+}
+
+/* 用户列表中的最新消息 */
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.user-name {
+  flex: 0.8;
+}
+
+.user-score {
+  margin-left: 10px;
+}
+
+.latest-message {
+  font-size: 0.9rem;
+  color: #666;
+  margin-left: -50px;
+  margin-right: 20px;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+

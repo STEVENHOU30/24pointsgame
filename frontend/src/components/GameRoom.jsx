@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import CardDisplay from "./CardDisplay";
 import ExpressionInput from "./ExpressionInput";
+import ChatDialog from "./ChatDialog";
 import useWebSocket from "react-use-websocket";
 import throttle from "lodash.throttle";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -11,7 +12,7 @@ export function GameRoom({ onError }) {
   const username = location.state?.username || "Guest";
   const navigate = useNavigate();
 
-  const WS_URL = "wss://a437e01c-fbba-41c9-b9fd-a92a88a62805-00-3vf9l3c2yfjgg.pike.replit.dev";
+  const WS_URL = "ws://localhost:53840";
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     WS_URL,
     {
@@ -39,6 +40,8 @@ export function GameRoom({ onError }) {
   const [gameStarted, setGameStarted] = useState(false);
   const [hasClickedStart, setHasClickedStart] = useState(false);
   const [startedUsers, setStartedUsers] = useState([]);
+  const [showChat, setShowChat] = useState(false);
+  const [latestMessages, setLatestMessages] = useState({});
 
   const getAvatarColor = (username) => {
     const safeUsername = username || "Unknown";
@@ -49,7 +52,19 @@ export function GameRoom({ onError }) {
 
   useEffect(() => {
     if (lastJsonMessage) {
-      if (lastJsonMessage.type === "userList") {
+      console.log("Received WebSocket message:", lastJsonMessage);
+      if (lastJsonMessage.type === "history") {
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          ...lastJsonMessage.messages
+            .filter((msg) => msg && !msg.system)
+            .map((msg) => ({
+              ...msg,
+              content_type: msg.content_type || "text", // 为历史消息设置默认 subtype
+              system: msg.system || false, // 为历史消息设置默认 system
+            })),
+        ]);
+      } else if (lastJsonMessage.type === "userList") {
         setOnlineUsers(lastJsonMessage.users);
         const initialScores = lastJsonMessage.users.reduce((acc, user) => {
           acc[user] = 0;
@@ -57,10 +72,21 @@ export function GameRoom({ onError }) {
         }, {});
         setScores(initialScores);
       } else if (lastJsonMessage.type === "chat") {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { ...lastJsonMessage, system: lastJsonMessage.system || false },
-        ]);
+        const newMessage = {
+          ...lastJsonMessage,
+          content_type: lastJsonMessage.content_type || "text", // 确保实时消息有 subtype
+          system: lastJsonMessage.system || false, // 确保实时消息有 system
+        };
+        if (!newMessage.system) {
+          setMessages((prevMessages) => [...prevMessages, newMessage]);
+          setLatestMessages((prev) => ({
+            ...prev,
+            [newMessage.sender]: {
+              content: newMessage.content,
+              sentTime: newMessage.sentTime,
+            },
+          }));
+        }
       } else if (lastJsonMessage.type === "game") {
         if (lastJsonMessage.subtype === "cards") {
           setCurrentCards(lastJsonMessage.cards);
@@ -96,6 +122,8 @@ export function GameRoom({ onError }) {
             ...prevMessages,
             {
               sender: "System",
+              type: "game",
+              subtype: "request_card_change",
               content: `${lastJsonMessage.requester} requests to change cards!`,
               sentTime: new Date(),
               system: true,
@@ -162,7 +190,7 @@ export function GameRoom({ onError }) {
       const newScores = { ...scores, [username]: scores[username] + 1 };
       setScores(newScores);
 
-      if (newScores[username] >= 5) {
+      if (newScores[username] >= 2) {
         setWinner(username);
         sendJsonMessage({
           type: "game",
@@ -194,6 +222,7 @@ export function GameRoom({ onError }) {
           subtype: "request_card_change",
           requester: cardChangeRequest,
           agreedUser: username,
+          system:true,
         });
       }
     } else {
@@ -201,12 +230,42 @@ export function GameRoom({ onError }) {
         type: "game",
         subtype: "request_card_change",
         requester: username,
+        system: true,
       });
     }
   };
 
+  const handleSendMessage = (content, file) => {
+    console.log("handleSendMessage:", { content, file, readyState });
+    if (readyState === WebSocket.OPEN) {
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const base64 = e.target.result.split(",")[1];
+          console.log("Sending image message:", { type: "chat", content_type: "image", content: base64 });
+          sendJsonMessageThrottled.current({
+            type: "chat",
+            content_type: "image",
+            content: base64,
+          });
+        };
+        reader.readAsDataURL(file);
+      } else if (content && !file) {
+        console.log("Sending text message:", { type: "chat", content_type: "text", content });
+        sendJsonMessageThrottled.current({
+          type: "chat",
+          content_type: "text",
+          content,
+        });
+      } else {
+        console.error("Invalid message: both content and file are empty or file exists with content");
+      }
+    } else {
+      console.error("WebSocket is not open:", readyState);
+    }
+  };
+
   const handleExit = () => {
-    // 调用 onError 回调（如果存在），并跳转到登录页面
     if (onError) {
       onError("You have exited the game.");
     }
@@ -223,6 +282,14 @@ export function GameRoom({ onError }) {
           {user.charAt(0).toUpperCase()}
         </span>
         <span className="user-name">{user}</span>
+        {latestMessages[user] && (
+          <span className="latest-message">
+            {latestMessages[user].content}{" "}
+            {latestMessages[user].sentTime
+              ? new Date(latestMessages[user].sentTime).toLocaleTimeString()
+              : "No Time"}
+          </span>
+        )}
         <span className="user-score">Score: {scores[user] || 0}</span>
       </div>
     ));
@@ -253,18 +320,23 @@ export function GameRoom({ onError }) {
       <div className={`game-content ${!gameStarted || winner ? "disabled" : ""}`}>
         <h2>Game Room!</h2>
         <p className="welcome-message">Welcome, {username}!</p>
+        <button className="chat-button" onClick={() => setShowChat(true)}>
+          💬
+        </button>
 
         {roundWin && (
-          <div className="round-winner-message">
-            <h3>{roundWin} wins this round!</h3>
-            {countdown !== null && winningExpression && (
-              <p>
-                Winning Expression: {winningExpression.expression} 🐮
-              </p>
-            )}
-            {countdown !== null && (
-              <p>new round will begin in {countdown} s !!!</p>
-            )}
+          <div className="overlay">
+            <div className="round-winner-message-overlay">
+              <h3>{roundWin} wins this round!</h3>
+              {countdown !== null && winningExpression && (
+                <p>
+                  Winning Expression: {winningExpression.expression} 🐮
+                </p>
+              )}
+              {countdown !== null && (
+                <p>new round will begin in {countdown} s !!!</p>
+              )}
+            </div>
           </div>
         )}
 
@@ -279,6 +351,16 @@ export function GameRoom({ onError }) {
             <button onClick={handleRequestCardChange}>
               Agree to Change Cards
             </button>
+          </div>
+        )}
+
+        {showChat && (
+          <div className="chat-dialog-overlay">
+            <ChatDialog
+              messages={messages}
+              onClose={() => setShowChat(false)}
+              onSendMessage={handleSendMessage}
+            />
           </div>
         )}
 
