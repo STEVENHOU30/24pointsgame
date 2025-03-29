@@ -12,7 +12,7 @@ const server = http.createServer((req, res) => {
   res.end();
 });
 
-const port = 53840;
+const port = process.env.PORT || 8080;
 const wsServer = new WebSocketServer({ server });
 
 const connections = {};
